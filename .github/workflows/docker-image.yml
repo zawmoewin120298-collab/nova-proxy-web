@@ -1,0 +1,22 @@
+name: Deploy to Railway
+
+on:
+  push:
+    branches:
+      - master # သင့် GitHub ရဲ့ မူရင်း branch က master မို့လို့ ဒီအတိုင်း ထားပေးပါ
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway
+        # --detach က နောက်ကွယ်ကနေ တင်ပေးဖို့ ဖြစ်ပြီး --service က သင့် repo နာမည်အတိုင်း ဆောက်ဖို့ဖြစ်ပါတယ်
+        run: railway up --detach --service=nova-proxy-web
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

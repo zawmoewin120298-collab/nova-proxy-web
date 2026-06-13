@@ -1,33 +1,25 @@
-# Step 1: Build stage
+# Step 1: Build stage (ဒီအတိုင်းပဲ ထားပါ)
 FROM golang:1.22-alpine AS builder
-
-# Build လုပ်ရာတွင် လိုအပ်သော git ကဲ့သို့ tool များ ထည့်သွင်းခြင်း
 RUN apk add --no-cache git
-
 WORKDIR /app
-
-# Go modules configuration ဖိုင်များကို အရင် copy ကူးယူခြင်း (Cache ရစေရန်)
 COPY go.mod go.sum ./
 RUN go mod download
-
-# Source code အားလုံးကို copy ကူးခြင်း
 COPY . .
-
-# Static binary အဖြစ် build လုပ်ခြင်း
 RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 
-# Step 2: Final lightweight image stage
-FROM alpine:latest
+# ==========================================
+# Step 2: Final stage (ဒါလေးကို အစားထိုးပေးပါ)
+# ==========================================
+FROM debian:bookworm-slim
 
-RUN apk add --no-cache ca-certificates
+# ca-certificates အလိုအလျောက် ပါပြီးသားဖြစ်သော်လည်း update လုပ်ရန်
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /root/
 
-# Builder stage မှ ထွက်လာသော binary ဖိုင်ကိုသာ သန့်သန့်ရှင်းရှင်း copy ကူးယူခြင်း
+# Builder ထဲက binary ဖိုင်ကို လှမ်းယူမယ်
 COPY --from=builder /app/main .
 
-# Railway အတွက် Port ဖွင့်ပေးခြင်း (သင့် app က သုံးမည့် port ပြောင်းပေးပါ)
 EXPOSE 8080
 
-# Application ကို Run ရန်
 CMD ["./main"]
